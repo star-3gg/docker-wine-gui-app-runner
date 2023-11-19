@@ -1,0 +1,42 @@
+FROM alpine:latest
+
+# Default values, overriden by .env
+ARG USER=username
+ARG PASS=password
+ARG NEW_UID=1000
+ARG NEW_GID=1000
+ARG DISPLAY=host.docker.internal:0.0
+
+RUN cat /etc/resolv.conf 
+
+# Update system and install sudo
+RUN pacman -Sy --noconfirm && \
+    pacman -S --noconfirm sudo bash wget wine winetricks zenity ttf-opensans adwaita-icon-theme
+
+# Configure Wine and its dependencies
+# Note: You might need to adjust the Wine Mono and Gecko versions based on availability
+RUN mkdir -p /opt/wine/mono && \
+    wget -O /opt/wine/mono/wine-mono-7.2.0-x86.msi https://dl.winehq.org/wine/wine-mono/7.2.0/wine-mono-7.2.0-x86.msi && \
+    wine msiexec /i /opt/wine/mono/wine-mono-7.2.0-x86.msi
+
+RUN mkdir -p /opt/wine/gecko && \
+    wget -O /opt/wine/gecko/wine-gecko-2.47.2-x86_64.msi https://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi && \
+    wine msiexec /i /opt/wine/gecko/wine-gecko-2.47.2-x86_64.msi
+
+# Create and configure a new user
+RUN groupadd -g ${NEW_GID} ${USER} && \
+    useradd -m -u ${NEW_UID} -g ${NEW_GID} -s /bin/bash ${USER} && \
+    echo "${USER}:${PASS}" | chpasswd && \
+    echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} && \
+    chmod 0440 /etc/sudoers.d/${USER}
+
+ENV DISPLAY=${DISPLAY}
+
+COPY ./run/ /home/${USER}/run/
+RUN chown -R ${USER}:${USER} /home/${USER}/run/
+
+USER ${USER}
+
+WORKDIR /home/${USER}/run/
+
+# CMD ["/bin/bash"]

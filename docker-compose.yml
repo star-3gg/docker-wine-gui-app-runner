@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  ###
+  # Docker service that runs a windows gui application inside of a docker container
+  ###
+  arch-wine-gui:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.arch-wine64
+      args:
+        # These values are read from the .env file. Make sure it is configured correctly
+        USER: ${USER}
+        PASS: ${PASS}
+        NEW_UID: ${NEW_UID}
+        NEW_GID: ${NEW_GID}
+        DISPLAY: ${DISPLAY}
+    restart: always
+    # ports:
+      # - '127.0.0.1:3000:3000'
+    # working_dir: /run
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run:/home/${USER}/run
+    command: sh -c "./setup-and-run.sh"
+    networks:
+      - internal
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+networks:
+  internal:
