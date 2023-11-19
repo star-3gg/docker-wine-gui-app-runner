@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM archlinux:latest
 
 # Default values, overriden by .env
 ARG USER=username
